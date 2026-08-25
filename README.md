@@ -2,14 +2,31 @@
 
 A quiet observation-deck dashboard for a software team, and a thin observability layer over your project management: tickets, pull requests, repo state, and team-channel signals, all on one self-contained page. The look is a nod to [hubble.md](https://github.com/bholmesdev/hubble.md).
 
-The page ships with fictional demo data (the ATLAS project, the atlas-app repo, and its team do not exist) so you can see every section populated. Point the workflow at your own sources and each refresh replaces the demo content with your real board.
+The page ships with fictional demo data (the ATLAS project, the atlas-app repo, and its team do not exist) so you can see every section populated. Point the sources at your own tools and each refresh replaces the demo content with your real board.
+
+## The two-minute demo
+
+```sh
+git clone https://github.com/matthewvilaysack/hubble-deck && cd hubble-deck
+bun run dev        # serves the page; open it and flip the palette picker
+claude             # start Claude Code inside the repo
+```
+
+Inside Claude Code the skills and the workflow load from `.claude/` automatically:
+
+1. `/hubble-refresh` fans out one read-only agent per source (Jira, your repo, Slack), rebuilds the page from what they found, and republishes it. On a fresh clone it stops and asks you to fill in `CONFIG` first, which is the 30-second setup.
+2. `/hubble-standup` turns your slice of the board into the three sentences you say at standup.
+3. `/hubble-weekly` drafts the Friday team update: shipped, board shape, flags, next.
+
+Nothing writes to Jira, GitHub, or Slack at any point. The page is static output with no backend, no polling, and no credentials of its own.
 
 ## How it's shaped
 
-- `hubble.html`: the dashboard page itself. Plain, self-contained HTML with no build step and no dependencies. Open it straight from disk, serve it locally with `bun run dev`, or publish it as a Claude Code artifact.
-- `workflows/hubble-dashboard.js`: a Claude Code workflow that gathers the data behind the page. Each source is one read-only agent, and the enabled ones run in parallel.
+- `hubble.html`: the dashboard page itself. Plain, self-contained HTML with no build step and no dependencies. Open it straight from disk, serve it with `bun run dev`, or publish it as a Claude Code artifact.
+- `.claude/workflows/hubble-dashboard.js`: the data layer. Each source is one read-only agent; the enabled ones run in parallel and return structured results.
+- `.claude/skills/`: the three skills above, picked up automatically when Claude Code runs inside the repo. Copy them to `~/.claude/skills/` if you want them available everywhere.
 
-The layer stays thin on purpose. The workflow only collects and summarizes; it never writes to Jira, GitHub, or Slack. The page is static output with no backend, no polling, and no accounts, so there is nothing to operate and nothing new for your team to trust with credentials.
+The layer stays thin on purpose. The workflow only collects and summarizes, the skills only read and draft, and the human stays on send for anything that leaves the machine.
 
 ## Sources
 
@@ -34,13 +51,6 @@ To add your own source (a build system, a pager, a wiki), add an entry to the `S
 - **The shape of the board**: pipeline by stage, team load per assignee (your bar is ringed), and priority mix.
 - **The repository**: current branch, uncommitted files, open PRs, recent commits on main.
 - **Field notes**: standing context worth keeping in view, the tribal knowledge that never fits in a ticket.
-
-## Refreshing the dashboard
-
-1. Edit the `CONFIG` block at the top of `workflows/hubble-dashboard.js`: your Jira project key, your display name (that drives "Your orbit" and the highlighted bar in "Team load"), a hint for finding your repo, your Slack channels, and which sources are on.
-2. Copy the file into `~/.claude/workflows/` (one time).
-3. In Claude Code, ask: "run the hubble-dashboard workflow, rebuild hubble.html with the results, and publish it as an artifact."
-4. Claude updates the ticket cards, signals, charts, and repo panels with the fresh data and republishes the page. Keep the same artifact URL by publishing from the same conversation, or pass your artifact URL when publishing from a new one.
 
 ## Palettes
 
