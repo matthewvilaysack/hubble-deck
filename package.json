@@ -1,0 +1,7 @@
+{
+  "name": "hubble-deck",
+  "private": true,
+  "scripts": {
+    "dev": "bun x serve ."
+  }
+}

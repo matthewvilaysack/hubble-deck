@@ -91,6 +91,10 @@
   .signal.crit { background: var(--crit-bg); border-color: var(--crit); }
   .flag { flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; color: var(--page); background: var(--warn); }
   .signal.crit .flag { background: var(--crit); }
+  .flag.decision { background: var(--good); }
+  .flag.question { background: var(--warn); }
+  .flag.announce { background: var(--muted); }
+  .signal .chan { flex: none; font-size: 11px; color: var(--muted); }
   .signal .body { font-size: 14px; }
   .signal .body a { color: var(--ink); font-weight: 600; text-decoration: none; }
   .signal .body a:hover { text-decoration: underline; }
@@ -145,7 +149,7 @@
     <div>
       <p class="eyebrow">Observation Deck · Your Team</p>
       <h1>Hubble</h1>
-      <p class="masthead-sub">Open tickets, pull requests, and repo state at a glance.</p>
+      <p class="masthead-sub">Open tickets, pull requests, repo state, and team signals at a glance.</p>
     </div>
     <div class="theme-pick">
       <label for="palette">Palette</label>
@@ -160,7 +164,7 @@
 
   <div class="dateline">
     <span>Tuesday, August 25, 2026 · demo data</span>
-    <span class="mono">source: example.atlassian.net + your-org/atlas-app · 30 most recently updated of 87 open tickets</span>
+    <span class="mono">source: example.atlassian.net + your-org/atlas-app + slack #atlas-eng · 30 most recently updated of 87 open tickets</span>
   </div>
 
   <div class="tiles">
@@ -275,6 +279,39 @@
         <span class="flag">⚠ Urgent</span>
         <span class="body"><a href="https://example.atlassian.net/browse/ATLAS-137">ATLAS-137</a> · First click on a report spins instead of loading data. In Doing.</span>
         <span class="who">Jordan P</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Ground control</h2>
+      <span class="note">blockers, decisions, and open questions pulled from team channels</span>
+    </div>
+    <div class="signals">
+      <div class="signal crit">
+        <span class="flag">Blocker</span>
+        <span class="chan mono">#atlas-support</span>
+        <span class="body">Password resets are bouncing for gmail addresses and the support queue is filling up. Ties to ATLAS-150.</span>
+        <span class="who">Riley T · 9:40 today</span>
+      </div>
+      <div class="signal">
+        <span class="flag question">Question</span>
+        <span class="chan mono">#atlas-eng</span>
+        <span class="body">Do we still need the legacy webhook signer once #407 lands? Unanswered for 4 hours.</span>
+        <span class="who">Jordan P · today</span>
+      </div>
+      <div class="signal">
+        <span class="flag decision">Decision</span>
+        <span class="chan mono">#atlas-eng</span>
+        <span class="body">The proxy body-limit fix ships with tomorrow's infra deploy, not as a standalone hotfix.</span>
+        <span class="who">Sam K · yesterday</span>
+      </div>
+      <div class="signal">
+        <span class="flag announce">Announce</span>
+        <span class="chan mono">#atlas-releases</span>
+        <span class="body">v2.14 rolled out to 100% with the error budget untouched.</span>
+        <span class="who">deploy bot · yesterday</span>
       </div>
     </div>
   </section>
