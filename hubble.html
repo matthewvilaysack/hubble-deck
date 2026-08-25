@@ -1,0 +1,462 @@
+<title>Hubble · Observation Deck</title>
+<style>
+  /* Ground tokens: neutral greys, fixed across palettes. */
+  :root {
+    --page: #F5F6F8;
+    --surface: #FFFFFF;
+    --surface-2: #EFF1F4;
+    --ink: #1D242E;
+    --ink-2: #59636F;
+    --muted: #8A939F;
+    --line: #E3E6EB;
+    --line-strong: #C8CFD8;
+    /* Categorical + ramp colors: the palette-able part, overridden by the picker.
+       Defaults match the Nebula palette (purple + green, cool). */
+    --s1: #6D4FC4; --s2: #1F9E77; --s3: #4A7DC9; --s4: #2A9DA8; --s5: #A64F9E;
+    --ramp-1: #DDD6F2; --ramp-2: #C0B2E6; --ramp-3: #A28ED8;
+    --ramp-4: #846AC7; --ramp-5: #6A4EB0; --ramp-6: #4F3690;
+    /* Priority + semantic colors: fixed, urgency always reads the same. */
+    --pr-1: #F0B48A; --pr-2: #DB7A3E; --pr-3: #B04A18;
+    --good: #2E7D46;
+    --warn: #9A6B00;
+    --crit: #C03A2B;
+    --crit-bg: rgba(192, 58, 43, 0.08);
+    --shadow: 0 1px 2px rgba(23, 32, 45, 0.06), 0 6px 18px rgba(23, 32, 45, 0.05);
+  }
+  :root[data-theme="light"] {
+    --page: #F5F6F8; --surface: #FFFFFF; --surface-2: #EFF1F4;
+    --ink: #1D242E; --ink-2: #59636F; --muted: #8A939F;
+    --line: #E3E6EB; --line-strong: #C8CFD8;
+    --s1: #6D4FC4; --s2: #1F9E77; --s3: #4A7DC9; --s4: #2A9DA8; --s5: #A64F9E;
+    --ramp-1: #DDD6F2; --ramp-2: #C0B2E6; --ramp-3: #A28ED8;
+    --ramp-4: #846AC7; --ramp-5: #6A4EB0; --ramp-6: #4F3690;
+    --pr-1: #F0B48A; --pr-2: #DB7A3E; --pr-3: #B04A18;
+    --good: #2E7D46; --warn: #9A6B00; --crit: #C03A2B;
+    --crit-bg: rgba(192, 58, 43, 0.08);
+    --shadow: 0 1px 2px rgba(23, 32, 45, 0.06), 0 6px 18px rgba(23, 32, 45, 0.05);
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 64px; }
+  .mono { font-family: "SF Mono", ui-monospace, "Menlo", monospace; font-variant-numeric: tabular-nums; }
+
+  /* ---------- masthead ---------- */
+  header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 20px; border-bottom: 2px solid var(--ink); }
+  .eyebrow { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 6px; }
+  h1 { font-size: clamp(38px, 6vw, 56px); line-height: 1.02; margin: 0; letter-spacing: -0.01em; font-weight: 600; text-wrap: balance; }
+  .masthead-sub { margin: 10px 0 0; color: var(--ink-2); font-size: 14.5px; max-width: 46ch; }
+  .theme-pick { flex: none; display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .theme-pick select { font: inherit; font-size: 12.5px; letter-spacing: normal; text-transform: none; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 8px; }
+  .theme-pick select:focus-visible { outline: 2px solid var(--s1); outline-offset: 1px; }
+
+  .dateline { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--ink-2); }
+  .dateline .mono { color: var(--muted); font-size: 11.5px; }
+
+  /* ---------- stat tiles ---------- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 26px 0 34px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 12px; box-shadow: var(--shadow); border-top: 3px solid var(--tile-accent, var(--line-strong)); }
+  .tile .num { font-size: 32px; font-weight: 600; line-height: 1.1; letter-spacing: -0.01em; }
+  .tile .lbl { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin-top: 3px; }
+  .tile .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- section headings ---------- */
+  section { margin-top: 44px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 16px; }
+  .sec-head h2 { font-size: 22px; margin: 0; font-weight: 600; }
+  .sec-head .note { font-size: 12.5px; color: var(--muted); }
+
+  /* ---------- your orbit ---------- */
+  .orbit { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--card-accent, var(--line-strong)); border-radius: 10px; padding: 13px 16px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .card a.key { color: var(--ink); text-decoration: none; font-weight: 600; font-size: 13px; }
+  .card a.key:hover { color: var(--s1); text-decoration: underline; }
+  .card .title { font-size: 14px; line-height: 1.4; color: var(--ink); margin: 0; }
+  .card .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; padding: 2.5px 9px; border-radius: 99px; border: 1px solid var(--line-strong); color: var(--ink-2); background: var(--surface-2); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--pd, var(--muted)); }
+  .prio { font-size: 11px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 4px; }
+  .prio.highest { color: var(--crit); font-weight: 600; }
+
+  /* ---------- signals ---------- */
+  .signals { display: flex; flex-direction: column; gap: 10px; }
+  .signal { display: flex; gap: 14px; align-items: baseline; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; box-shadow: var(--shadow); }
+  .signal.crit { background: var(--crit-bg); border-color: var(--crit); }
+  .flag { flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; color: var(--page); background: var(--warn); }
+  .signal.crit .flag { background: var(--crit); }
+  .signal .body { font-size: 14px; }
+  .signal .body a { color: var(--ink); font-weight: 600; text-decoration: none; }
+  .signal .body a:hover { text-decoration: underline; }
+  .signal .who { font-size: 12px; color: var(--muted); white-space: nowrap; margin-left: auto; flex: none; }
+
+  /* ---------- charts ---------- */
+  .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px 14px; box-shadow: var(--shadow); }
+  .chart h3 { font-size: 14.5px; margin: 0 0 2px; font-weight: 600; }
+  .chart .sub { font-size: 12px; color: var(--muted); margin: 0 0 14px; }
+  .brow { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; min-height: 26px; }
+  .brow .rl { font-size: 12px; color: var(--ink-2); text-align: right; line-height: 1.2; }
+  .brow .rl strong { color: var(--ink); }
+  .track { position: relative; height: 16px; display: flex; align-items: center; }
+  .bar { height: 14px; border-radius: 0 4px 4px 0; min-width: 3px; cursor: default; }
+  .bval { font-size: 11.5px; color: var(--ink-2); margin-left: 7px; font-weight: 600; }
+  .axis-note { font-size: 11px; color: var(--muted); margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+  #tooltip { position: fixed; pointer-events: none; background: var(--ink); color: var(--page); font-size: 12px; line-height: 1.35; padding: 6px 10px; border-radius: 6px; opacity: 0; transition: opacity 0.12s; z-index: 50; max-width: 260px; }
+  @media (prefers-reduced-motion: reduce) { #tooltip { transition: none; } }
+
+  /* ---------- repo ---------- */
+  .repo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; box-shadow: var(--shadow); }
+  .panel h3 { font-size: 14.5px; margin: 0 0 10px; font-weight: 600; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); font-size: 13.5px; }
+  .kv:last-child { border-bottom: none; }
+  .kv .k { color: var(--ink-2); }
+  .kv .v { text-align: right; }
+  .kv .v a { color: var(--ink); font-weight: 600; text-decoration: none; }
+  .kv .v a:hover { text-decoration: underline; color: var(--s1); }
+  .commits { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .commits li { padding: 5px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 10px; align-items: baseline; }
+  .commits li:last-child { border-bottom: none; }
+  .commits .sha { color: var(--muted); font-size: 11px; flex: none; }
+  .chip { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line-strong); color: var(--ink-2); }
+
+  /* ---------- field notes ---------- */
+  .notes { columns: 2; column-gap: 28px; }
+  @media (max-width: 720px) { .notes { columns: 1; } }
+  .note-item { break-inside: avoid; padding: 0 0 16px; }
+  .note-item h4 { font-size: 13.5px; margin: 0 0 3px; font-weight: 600; }
+  .note-item h4::before { content: "✦ "; color: var(--s4); }
+  .note-item p { margin: 0; font-size: 13.5px; color: var(--ink-2); max-width: 58ch; }
+
+  footer { margin-top: 52px; border-top: 2px solid var(--ink); padding-top: 14px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+  footer .mono { font-size: 11px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">Observation Deck · Your Team</p>
+      <h1>Hubble</h1>
+      <p class="masthead-sub">Open tickets, pull requests, and repo state at a glance.</p>
+    </div>
+    <div class="theme-pick">
+      <label for="palette">Palette</label>
+      <select id="palette">
+        <option value="nebula">Nebula</option>
+        <option value="slate">Slate</option>
+        <option value="forest">Forest</option>
+        <option value="plum">Plum</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="dateline">
+    <span>Tuesday, August 25, 2026 · demo data</span>
+    <span class="mono">source: example.atlassian.net + your-org/atlas-app · 30 most recently updated of 87 open tickets</span>
+  </div>
+
+  <div class="tiles">
+    <div class="tile" style="--tile-accent: var(--s1);">
+      <div class="num mono">87</div>
+      <div class="lbl">Open tickets</div>
+      <div class="sub">30 tracked below</div>
+    </div>
+    <div class="tile" style="--tile-accent: var(--s2);">
+      <div class="num mono">9</div>
+      <div class="lbl">Yours</div>
+      <div class="sub">1 ready to close · 2 in testing</div>
+    </div>
+    <div class="tile" style="--tile-accent: var(--s3);">
+      <div class="num mono">6</div>
+      <div class="lbl">Highest priority</div>
+      <div class="sub">of 30 tracked</div>
+    </div>
+    <div class="tile" style="--tile-accent: var(--s4);">
+      <div class="num mono">3</div>
+      <div class="lbl">Signal flares</div>
+      <div class="sub">2 critical · 1 urgent</div>
+    </div>
+    <div class="tile" style="--tile-accent: var(--s5);">
+      <div class="num mono">7</div>
+      <div class="lbl">Open PRs</div>
+      <div class="sub">2 human · 5 dependabot</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head">
+      <h2>Your orbit</h2>
+      <span class="note">5 of your 9 shown; the rest are long-parked holdovers</span>
+    </div>
+    <div class="orbit">
+      <div class="card" style="--card-accent: var(--s5);">
+        <div class="card-top">
+          <a class="key mono" href="https://example.atlassian.net/browse/ATLAS-142">ATLAS-142</a>
+          <span class="prio highest">▲ Highest</span>
+        </div>
+        <p class="title">Checkout retries can double-charge on a flaky network</p>
+        <div class="meta">
+          <span class="pill"><span class="dot" style="--pd: var(--s5);"></span>Code Review</span>
+          <span class="prio">idempotency-key fix in PR #412</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: var(--s3);">
+        <div class="card-top">
+          <a class="key mono" href="https://example.atlassian.net/browse/ATLAS-131">ATLAS-131</a>
+          <span class="prio">Medium</span>
+        </div>
+        <p class="title">Export to CSV drops the last page of results</p>
+        <div class="meta">
+          <span class="pill"><span class="dot" style="--pd: var(--s3);"></span>Testing</span>
+          <span class="prio">updated Aug 22 · QA verifying pagination</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: var(--s2);">
+        <div class="card-top">
+          <a class="key mono" href="https://example.atlassian.net/browse/ATLAS-118">ATLAS-118</a>
+          <span class="prio">Medium</span>
+        </div>
+        <p class="title">Onboarding email links expire before the welcome call</p>
+        <div class="meta">
+          <span class="pill"><span class="dot" style="--pd: var(--s2);"></span>To Do</span>
+          <span class="prio">close agreed at standup, Aug 21</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: var(--s1);">
+        <div class="card-top">
+          <a class="key mono" href="https://example.atlassian.net/browse/ATLAS-97">ATLAS-97</a>
+          <span class="prio">High</span>
+        </div>
+        <p class="title">Search results flicker on slow connections</p>
+        <div class="meta">
+          <span class="pill"><span class="dot" style="--pd: var(--s1);"></span>Doing</span>
+          <span class="prio">updated Aug 20</span>
+        </div>
+      </div>
+      <div class="card" style="--card-accent: var(--s3);">
+        <div class="card-top">
+          <a class="key mono" href="https://example.atlassian.net/browse/ATLAS-88">ATLAS-88</a>
+          <span class="prio">Medium</span>
+        </div>
+        <p class="title">Settings page: role dropdown loses its selection</p>
+        <div class="meta">
+          <span class="pill"><span class="dot" style="--pd: var(--s3);"></span>Testing</span>
+          <span class="prio">updated Aug 12 · long-parked</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Signal flares</h2>
+      <span class="note">tickets flagged critical or urgent in their own words</span>
+    </div>
+    <div class="signals">
+      <div class="signal crit">
+        <span class="flag">⚠ Critical</span>
+        <span class="body"><a href="https://example.atlassian.net/browse/ATLAS-150">ATLAS-150</a> · Password reset emails have not been sending since Friday's deploy. Mail provider healthy; suspect the new queue worker. Still To Do.</span>
+        <span class="who">Sam K</span>
+      </div>
+      <div class="signal crit">
+        <span class="flag">⚠ Critical</span>
+        <span class="body"><a href="https://example.atlassian.net/browse/ATLAS-149">ATLAS-149</a> · Image uploads fail for files over 5 MB on both staging and production. Filed at Medium despite the wording.</span>
+        <span class="who">Riley T</span>
+      </div>
+      <div class="signal">
+        <span class="flag">⚠ Urgent</span>
+        <span class="body"><a href="https://example.atlassian.net/browse/ATLAS-137">ATLAS-137</a> · First click on a report spins instead of loading data. In Doing.</span>
+        <span class="who">Jordan P</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>The shape of the board</h2>
+      <span class="note">30 most recently updated open tickets (Aug 15–25 window)</span>
+    </div>
+    <div class="charts">
+      <div class="chart">
+        <h3>Pipeline</h3>
+        <p class="sub">tickets by stage, early to late</p>
+        <div class="brow"><span class="rl">To Do</span><div class="track"><div class="bar" style="width: 100%; background: var(--ramp-1);" data-tip="To Do · 11 tickets, incl. critical ATLAS-150 and your ATLAS-118"></div><span class="bval mono">11</span></div></div>
+        <div class="brow"><span class="rl">Doing</span><div class="track"><div class="bar" style="width: 55%; background: var(--ramp-2);" data-tip="Doing · 6 tickets: report first-click spin, search flicker, upload retries"></div><span class="bval mono">6</span></div></div>
+        <div class="brow"><span class="rl">In Progress</span><div class="track"><div class="bar" style="width: 27%; background: var(--ramp-3);" data-tip="In Progress · 3 tickets, incl. the audit-log export epic"></div><span class="bval mono">3</span></div></div>
+        <div class="brow"><span class="rl">Code Review</span><div class="track"><div class="bar" style="width: 27%; background: var(--ramp-4);" data-tip="Code Review · 3 tickets, incl. your ATLAS-142 double-charge fix"></div><span class="bval mono">3</span></div></div>
+        <div class="brow"><span class="rl">Testing</span><div class="track"><div class="bar" style="width: 55%; background: var(--ramp-5);" data-tip="Testing · 6 tickets incl. your ATLAS-131 and ATLAS-88"></div><span class="bval mono">6</span></div></div>
+        <div class="brow"><span class="rl">Blocked</span><div class="track"><div class="bar" style="width: 9%; background: var(--ramp-6);" data-tip="Blocked · ATLAS-121 waiting on the payments vendor"></div><span class="bval mono">1</span></div></div>
+        <div class="axis-note">Light to dark = early to late stage.</div>
+      </div>
+
+      <div class="chart">
+        <h3>Team load</h3>
+        <p class="sub">open tickets per assignee, this window</p>
+        <div class="brow"><span class="rl">Riley T</span><div class="track"><div class="bar" style="width: 100%; background: var(--s1);" data-tip="Riley T · 9 tickets, 3 at Highest"></div><span class="bval mono">9</span></div></div>
+        <div class="brow"><span class="rl">Sam K</span><div class="track"><div class="bar" style="width: 78%; background: var(--s1);" data-tip="Sam K · 7 tickets, incl. the password-reset outage"></div><span class="bval mono">7</span></div></div>
+        <div class="brow"><span class="rl"><strong>You</strong></span><div class="track"><div class="bar" style="width: 56%; background: var(--s1); outline: 2px solid var(--s2); outline-offset: 1px;" data-tip="You · 5 in this window; 9 assigned in total"></div><span class="bval mono">5</span></div></div>
+        <div class="brow"><span class="rl">Jordan P</span><div class="track"><div class="bar" style="width: 56%; background: var(--s1);" data-tip="Jordan P · 5 tickets, reports and dashboards"></div><span class="bval mono">5</span></div></div>
+        <div class="brow"><span class="rl">Alex M</span><div class="track"><div class="bar" style="width: 33%; background: var(--s1);" data-tip="Alex M · 3 tickets, settings and roles"></div><span class="bval mono">3</span></div></div>
+        <div class="brow"><span class="rl">Grace L</span><div class="track"><div class="bar" style="width: 11%; background: var(--s1);" data-tip="Grace L · ATLAS-121, blocked on the payments vendor"></div><span class="bval mono">1</span></div></div>
+        <div class="axis-note">Your bar is ringed in the accent color; your 4 older tickets sit outside this window.</div>
+      </div>
+
+      <div class="chart">
+        <h3>Priority mix</h3>
+        <p class="sub">tickets by priority</p>
+        <div class="brow"><span class="rl">Highest</span><div class="track"><div class="bar" style="width: 40%; background: var(--pr-3);" data-tip="Highest · 6 of 30 tickets"></div><span class="bval mono">6</span></div></div>
+        <div class="brow"><span class="rl">High</span><div class="track"><div class="bar" style="width: 60%; background: var(--pr-2);" data-tip="High · 9 of 30 tickets"></div><span class="bval mono">9</span></div></div>
+        <div class="brow"><span class="rl">Medium</span><div class="track"><div class="bar" style="width: 100%; background: var(--pr-1);" data-tip="Medium · 15 of 30, incl. CRITICAL-worded ATLAS-149"></div><span class="bval mono">15</span></div></div>
+        <div class="axis-note">One bug worded CRITICAL is filed at Medium; the title and the field disagree.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>The repository</h2>
+      <span class="note">your-org/atlas-app, main checkout</span>
+    </div>
+    <div class="repo-grid">
+      <div class="panel">
+        <h3>Working state</h3>
+        <div class="kv"><span class="k">Current branch</span><span class="v mono">feature/ATLAS-142 · 0 ahead of main</span></div>
+        <div class="kv"><span class="k">Uncommitted files</span><span class="v mono">3</span></div>
+        <div class="kv"><span class="k">Open PRs</span><span class="v"><a href="https://github.com/your-org/atlas-app/pulls">7</a> · <span class="chip">5 dependabot</span></span></div>
+        <div class="kv"><span class="k">Human PRs</span><span class="v"><a href="https://github.com/your-org/atlas-app/pull/412">#412 checkout idempotency keys (draft)</a> · <a href="https://github.com/your-org/atlas-app/pull/407">#407 CSV export pagination</a></span></div>
+      </div>
+      <div class="panel">
+        <h3>Recently landed on main</h3>
+        <ul class="commits">
+          <li><span class="sha mono">4b8e2a1c</span><span>Cache report queries per session (#405)</span></li>
+          <li><span class="sha mono">9f13d7e0</span><span>Retry failed webhook deliveries with backoff</span></li>
+          <li><span class="sha mono">c2a94b56</span><span>Split billing settings out of the account page</span></li>
+          <li><span class="sha mono">70de1f83</span><span>Upgrade image pipeline to sharp 0.34</span></li>
+          <li><span class="sha mono">e5c6091a</span><span>Rename Owner role to Admin across the UI</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Field notes</h2>
+      <span class="note">standing context worth keeping in view</span>
+    </div>
+    <div class="notes">
+      <div class="note-item">
+        <h4>Every merge to main deploys</h4>
+        <p>Main auto-deploys to production about ten minutes after merge. There is no manual gate, so a merged PR is a shipped PR.</p>
+      </div>
+      <div class="note-item">
+        <h4>Mobile web is not in CI</h4>
+        <p>The responsive layouts have no test job, so a green CI run says nothing about them. Verify below 1280px by hand.</p>
+      </div>
+      <div class="note-item">
+        <h4>Staging seed resets nightly</h4>
+        <p>Anything created on staging disappears at 02:00 UTC. Reproduce bugs before midnight or note the exact steps in the ticket.</p>
+      </div>
+      <div class="note-item">
+        <h4>ATLAS-149 cause is already found</h4>
+        <p>Uploads over 5 MB hit the proxy's default body limit, not the app. The one-line config fix is written; it ships with the next infra PR.</p>
+      </div>
+      <div class="note-item">
+        <h4>Owner is now Admin</h4>
+        <p>Main just picked up the rename, UI terminology and the built-in role both. Expect role-name checks in older tests to churn.</p>
+      </div>
+      <div class="note-item">
+        <h4>Payments vendor sandbox is flaky</h4>
+        <p>ATLAS-121 is blocked on their side. Their status page undercounts; trust the ticket thread over the dashboard.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Hubble · demo data, August 25, 2026</span>
+    <span class="mono">refresh: run the hubble-dashboard workflow, then republish</span>
+  </footer>
+</div>
+
+<div id="tooltip" role="status"></div>
+<script>
+  (function () {
+    var tip = document.getElementById('tooltip');
+    document.querySelectorAll('.bar[data-tip]').forEach(function (bar) {
+      bar.addEventListener('mousemove', function (e) {
+        tip.textContent = bar.getAttribute('data-tip');
+        tip.style.opacity = '1';
+        var x = Math.min(e.clientX + 14, window.innerWidth - tip.offsetWidth - 10);
+        var y = e.clientY - tip.offsetHeight - 12;
+        if (y < 8) y = e.clientY + 18;
+        tip.style.left = x + 'px';
+        tip.style.top = y + 'px';
+      });
+      bar.addEventListener('mouseleave', function () { tip.style.opacity = '0'; });
+    });
+  })();
+
+  /* Palettes override the categorical series (--s1..--s5) and the pipeline ramp
+     (--ramp-1..--ramp-6). Priority and semantic colors stay fixed. To add your
+     own palette: add an entry here with light and dark variants, then add a
+     matching <option> to the #palette select in the header. */
+  (function () {
+    var PALETTES = {
+      nebula: {
+        light: { s: ['#6D4FC4', '#1F9E77', '#4A7DC9', '#2A9DA8', '#A64F9E'],
+                 ramp: ['#DDD6F2', '#C0B2E6', '#A28ED8', '#846AC7', '#6A4EB0', '#4F3690'] },
+        dark:  { s: ['#9C82E0', '#3FBF97', '#7AA5DE', '#4FBFC9', '#C77CBE'],
+                 ramp: ['#332757', '#43346F', '#554489', '#6C58A6', '#8A77C0', '#AC9CDA'] }
+      },
+      slate: {
+        light: { s: ['#3D74B8', '#D9782D', '#2E9B77', '#B8912A', '#8A64A8'],
+                 ramp: ['#C7D8EC', '#9FBEDF', '#76A3D1', '#4E86BE', '#33689E', '#204B77'] },
+        dark:  { s: ['#6E9ED6', '#E08B4C', '#43B58E', '#CDA83F', '#A985C4'],
+                 ramp: ['#24425F', '#2E547A', '#3A6896', '#4F81B0', '#6F9CC7', '#97BBDD'] }
+      },
+      forest: {
+        light: { s: ['#2E8B62', '#C77B33', '#3D74B8', '#A88A2E', '#99617D'],
+                 ramp: ['#C6E3D4', '#98CBB1', '#6BB392', '#429873', '#2A7A59', '#1C5940'] },
+        dark:  { s: ['#4FB98B', '#D98F52', '#6E9ED6', '#C2A345', '#B57F9E'],
+                 ramp: ['#1F4636', '#2A5C47', '#377359', '#478C6E', '#63A788', '#8CC3AA'] }
+      },
+      plum: {
+        light: { s: ['#7D5BA6', '#C36B4A', '#3E8E68', '#B08A2E', '#4E79A7'],
+                 ramp: ['#DCD2EA', '#BFAAD9', '#A184C6', '#8462AF', '#684A92', '#4C3370'] },
+        dark:  { s: ['#A585CB', '#D6845F', '#43B58E', '#CDA83F', '#6E9ED6'],
+                 ramp: ['#3A2E52', '#4A3C68', '#5C4C80', '#715F99', '#8B7AB3', '#AA9CCB'] }
+      }
+    };
+    var KEY = 'hubble-palette';
+    var select = document.getElementById('palette');
+    function mode() {
+      return 'light';
+    }
+    function apply(name) {
+      var p = PALETTES[name] || PALETTES.nebula;
+      var v = p[mode()];
+      var r = document.documentElement.style;
+      v.s.forEach(function (c, i) { r.setProperty('--s' + (i + 1), c); });
+      v.ramp.forEach(function (c, i) { r.setProperty('--ramp-' + (i + 1), c); });
+    }
+    function current() {
+      var saved;
+      try { saved = localStorage.getItem(KEY); } catch (e) {}
+      return PALETTES[saved] ? saved : 'nebula';
+    }
+
+    select.value = current();
+    apply(select.value);
+    select.addEventListener('change', function () {
+      try { localStorage.setItem(KEY, select.value); } catch (e) {}
+      apply(select.value);
+    });
+  })();
+</script>
